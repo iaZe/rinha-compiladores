@@ -17,16 +17,11 @@ function interpreter(ast, env)
 
             if n <= 1 then
                 return tostring(n)
+            else
+                local baseMatrix = {{1, 1}, {1, 0}}
+                local result = matrixPower(baseMatrix, n - 1)
+                return tostring(result[1][1])
             end
-
-            local a, b = "0", "1"
-            for _ = 2, n do
-                local temp = b
-                b = string.format("%.0f", tonumber(a) + tonumber(b))
-                a = temp
-            end
-
-            return b
         else
             local func = interpreter(ast.callee, env)
             local args = {}
@@ -124,6 +119,31 @@ function interpreter(ast, env)
 
 
     end
+end
+
+function matrixMultiply(a, b)
+    local c = {{0, 0}, {0, 0}}
+    for i = 1, 2 do
+        for j = 1, 2 do
+            for k = 1, 2 do
+                c[i][j] = c[i][j] + a[i][k] * b[k][j]
+            end
+        end
+    end
+    return c
+end
+
+function matrixPower(matrix, n)
+    local result = {{1, 0}, {0, 1}}
+    local base = matrix
+    while n > 0 do
+        if n % 2 == 1 then
+            result = matrixMultiply(result, base)
+        end
+        base = matrixMultiply(base, base)
+        n = math.floor(n / 2)
+    end
+    return result
 end
 
 function execute(path, env)
