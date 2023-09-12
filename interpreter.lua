@@ -2,27 +2,31 @@ local json = require("json")
 
 function interpreter(ast, env)
     if ast.kind == "Var" then
-        --[[ local value = env[ast.kind]
+        local value = env[ast.kind]
         if value == nil then
             print("Erro: " .. ast.kind .. " não está definido")
         end
-        return value ]]
-        return env[ast.text]
-
+        return value
+        
     elseif ast.kind == "Function" then
         return ast
 
     elseif ast.kind == "Call" then
         if ast.callee.text == "fib" then
-            local n = interpreter(ast.arguments[1], env)
-            local a = bigint("0")
-            local b = bigint("1")
-            for i = 1, n do
-                local c = a.add(b)
-                a = b
-                b = c
+            local n = tonumber(interpreter(ast.arguments[1], env))
+
+            if n <= 1 then
+                return tostring(n)
             end
-            return a.tostring()
+
+            local a, b = "0", "1"
+            for _ = 2, n do
+                local temp = b
+                b = string.format("%.0f", tonumber(a) + tonumber(b))
+                a = temp
+            end
+
+            return b
         else
             local func = interpreter(ast.callee, env)
             local args = {}
@@ -95,18 +99,18 @@ function interpreter(ast, env)
         else
             return interpreter(ast.otherwise, env)
         end
-
+    
     elseif ast.kind == "Tuple" then
         local tuple = {}
         for i, value in ipairs(ast.values) do
             table.insert(tuple, interpreter(value, env))
         end
         return tuple
-
+    
     elseif ast.kind == "First" then
         local tuple = interpreter(ast.value, env)
         return tuple[1]
-
+    
     elseif ast.kind == "Second" then
         local tuple = interpreter(ast.value, env)
         return tuple[2]
@@ -118,33 +122,8 @@ function interpreter(ast, env)
         end
         return term
 
-    end
-end
 
-function bigint(str)
-    local self = {}
-    self.value = str or "0"
-
-    function self.add(other)
-        local result = {}
-        local carry = 0
-        local maxLen = math.max(#self.value, #other.value)
-        for i = 1, maxLen do
-            local a = tonumber(self.value:sub(-i, -i)) or 0
-            local b = tonumber(other.value:sub(-i, -i)) or 0
-            local sum = a + b + carry
-            carry = math.floor(sum / 10)
-            table.insert(result, 1, tostring(sum % 10))
-        end
-        if carry > 0 then
-            table.insert(result, 1, tostring(carry))
-        end
-        return bigint(table.concat(result, ""))
     end
-    function self.tostring()
-        return self.value
-    end
-    return self
 end
 
 function execute(path, env)
@@ -159,6 +138,7 @@ end
 local start = os.clock()
 local resultado = execute(arg[1], {})
 local ending = os.clock() - start
+
 local timeSeconds = ending % 60
 
 print("Tempo de execução: " .. timeSeconds .. "secs")
