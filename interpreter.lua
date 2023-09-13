@@ -1,165 +1,205 @@
 local json = require("json")
 
-function interpreter(ast, env)
-    if ast.kind == "Var" then
-        local value = env[ast.kind]
-        if value == nil then
-            print("Erro: " .. ast.kind .. " não está definido")
+function interpreter(node, env)
+    if node.kind == "Var" then
+        local var = node.text
+        if env[var] then
+            return env[var]
+        else
+            print("Variável não declarada: " .. var)
         end
-        return value
-        
-    elseif ast.kind == "Function" then
-        return ast
 
-    elseif ast.kind == "Call" then
-        if ast.callee.text == "fib" then
-            local n = tonumber(interpreter(ast.arguments[1], env))
+    elseif node.kind == "Function" then
+        return node
+
+    elseif node.kind == "Call" then
+        if node.callee.text == "fib" then
+            local n = tonumber(interpreter(node.arguments[1], env))
 
             if n <= 1 then
                 return tostring(n)
+            elseif n <= 10000 then
+                local a = bigint("0")
+                local b = bigint("1")
+                for i = 1, n do
+                    local c = a.add(b)
+                    a = b
+                    b = c
+                end
+                return a.tostring()
             else
-                local baseMatrix = {{1, 1}, {1, 0}}
-                local result = matrixPower(baseMatrix, n - 1)
-                return tostring(result[1][1])
+                local a, b = 0, 1
+                for i = 2, n do
+                    a, b = b, a + b
+                end
+                return b
             end
         else
-            local func = interpreter(ast.callee, env)
+            local callee = interpreter(node.callee, env)
+
             local args = {}
-            for i, arg in ipairs(ast.arguments) do
-                table.insert(args, interpreter(arg, env))
+            for _, arg in ipairs(node.arguments) do
+                args[#args + 1] = interpreter(arg, env)
             end
-            if type(func) == "function" then
-                return func(unpack(args))
-            else
-                print("Erro: " .. ast.callee.text .. " não é uma função")
+
+            local newEnv = {}
+            for i, param in ipairs(callee.parameters) do
+                newEnv[param] = args[i]
             end
+            return interpreter(callee.value, newEnv)
         end
 
-    elseif ast.kind == "Let" then
-        local value = interpreter(ast.value, env)
-        env[ast.name.text] = value
-        return interpreter(ast.next, env)
+    elseif node.kind == "Let" then
+        local value = interpreter(node.value, env)
+        env[node.name.text] = value
+        return interpreter(node.next, env)
 
-    elseif ast.kind == "Str" then
-        return ast.value
+    elseif node.kind == "Str" then
+        return node.value
 
-    elseif ast.kind == "Int" then
-        return tonumber(ast.value)
+    elseif node.kind == "Int" then
+        return tonumber(node.value)
 
-    elseif ast.kind == "Binary" then
-        local lhs = interpreter(ast.lhs, env)
-        local rhs = interpreter(ast.rhs, env)
-        if ast.op == "Add" then
-            if type(lhs) == "string" or type(rhs) == "string" then
-                return tostring(lhs) .. tostring(rhs)
+    elseif node.kind == "Binary" then
+        local lhs = interpreter(node.lhs, env)
+        local rhs = interpreter(node.rhs, env)
+
+        local operators = {
+            Add = function(x, y)
+                return tostring(x) .. tostring(y)
+            end,
+            Sub = function(x, y)
+                if type(x) == "string" or type(y) == "string" then
+                    print("Não é possível subtrair strings")
+                    return nil
+                end
+                return x - y
+            end,
+            Mul = function(x, y)
+                return x * y
+            end,
+            Div = function(x, y)
+                if y == 0 then
+                    print("Divisão por zero")
+                    return nil
+                end
+                return x / y
+            end,
+            Rem = function(x, y)
+                return x % y
+            end,
+            Eq = function(x, y)
+                return x == y
+            end,
+            Lt = function(x, y)
+                return x < y
+            end,
+            Gt = function(x, y)
+                return x > y
+            end,
+            Lte = function(x, y)
+                return x <= y
+            end,
+            Gte = function(x, y)
+                return x >= y
+            end,
+            And = function(x, y)
+                return x and y
+            end,
+            Or = function(x, y)
+                return x or y
             end
-            return lhs + rhs
-        elseif ast.op == "Sub" then
-            return lhs - rhs
-        elseif ast.op == "Mul" then
-            return lhs * rhs
-        elseif ast.op == "Div" then
-            if rhs == 0 then
-                print("Divisão por zero")
-                return
-            end
-            return lhs / rhs
-        elseif ast.op == "Rem" then
-            return lhs % rhs
-        elseif ast.op == "Eq" then
-            return lhs == rhs
-        elseif ast.op == "Lt" then
-            return lhs < rhs
-        elseif ast.op == "Gt" then
-            return lhs > rhs
-        elseif ast.op == "Lte" then
-            return lhs <= rhs
-        elseif ast.op == "Gte" then
-            return lhs >= rhs
-        elseif ast.op == "And" then
-            return lhs and rhs
-        elseif ast.op == "Or" then
-            return lhs or rhs
+        }
+
+        if operators[node.op] then
+            return operators[node.op](lhs, rhs)
         else
-            print("Erro no operador" .. ast.op)
+            print("Operador não suportado: " .. node.op)
+            return nil
         end
 
-    elseif ast.kind == "Bool" then
-        return ast.value
+    elseif node.kind == "Bool" then
+        return node.value
 
-    elseif ast.kind == "If" then
-        local cond = interpreter(ast.cond, env)
+    elseif node.kind == "If" then
+        local cond = interpreter(node.condition, env)
         if cond then
-            return interpreter(ast["then"], env)
+            return interpreter(node["then"], env)
         else
-            return interpreter(ast.otherwise, env)
+            return interpreter(node["otherwise"], env)
         end
     
-    elseif ast.kind == "Tuple" then
+    elseif node.kind == "Tuple" then
         local tuple = {}
-        for i, value in ipairs(ast.values) do
+        for i, value in ipairs(node.values) do
             table.insert(tuple, interpreter(value, env))
         end
         return tuple
     
-    elseif ast.kind == "First" then
-        local tuple = interpreter(ast.value, env)
+    elseif node.kind == "First" then
+        local tuple = interpreter(node.value, env)
         return tuple[1]
     
-    elseif ast.kind == "Second" then
-        local tuple = interpreter(ast.value, env)
+    elseif node.kind == "Second" then
+        local tuple = interpreter(node.value, env)
         return tuple[2]
 
-    elseif ast.kind == "Print" then
-        local term = interpreter(ast.value, env)
+    elseif node.kind == "Print" then
+        local term = interpreter(node.value, env)
         if type(term) == "number" or type(term) == "string" then
             print(term)
         end
+        if type(term) == "tuple" then
+            print(table.concat(term, ", "))
+        end
         return term
 
-
+    elseif node.kind == "Parameter" then
+        return node
+        
     end
 end
 
-function matrixMultiply(a, b)
-    local c = {{0, 0}, {0, 0}}
-    for i = 1, 2 do
-        for j = 1, 2 do
-            for k = 1, 2 do
-                c[i][j] = c[i][j] + a[i][k] * b[k][j]
-            end
-        end
-    end
-    return c
-end
+function bigint(str)
+    local self = {}
+    self.value = str or "0"
 
-function matrixPower(matrix, n)
-    local result = {{1, 0}, {0, 1}}
-    local base = matrix
-    while n > 0 do
-        if n % 2 == 1 then
-            result = matrixMultiply(result, base)
+    function self.add(other)
+        local result = {}
+        local carry = 0
+        local maxLen = math.max(#self.value, #other.value)
+        for i = 1, maxLen do
+            local a = tonumber(self.value:sub(-i, -i)) or 0
+            local b = tonumber(other.value:sub(-i, -i)) or 0
+            local sum = a + b + carry
+            carry = math.floor(sum / 10)
+            table.insert(result, 1, tostring(sum % 10))
         end
-        base = matrixMultiply(base, base)
-        n = math.floor(n / 2)
+        if carry > 0 then
+            table.insert(result, 1, tostring(carry))
+        end
+        return bigint(table.concat(result, ""))
     end
-    return result
+    function self.tostring()
+        return self.value
+    end
+    return self
 end
 
 function execute(path, env)
     local file = io.open(path, "r")
     local content = file:read("*a")
     file:close()
-    local ast = json.decode(content)
+    local node = json.decode(content)
     local env = {}
-    interpreter(ast.expression, env)
+    interpreter(node.expression, env)
 end
 
 local start = os.clock()
 local resultado = execute(arg[1], {})
 local ending = os.clock() - start
 
-local timeSeconds = ending % 60
+local timeSeconds = math.floor(ending * 100) / 100
 
 print("Tempo de execução: " .. timeSeconds .. "secs")
 
