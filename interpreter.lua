@@ -5,8 +5,6 @@ function interpreter(node, env)
         local var = node.text
         if env[var] then
             return env[var]
-        else
-            print("Variável não declarada: " .. var)
         end
 
     elseif node.kind == "Function" then
@@ -15,7 +13,7 @@ function interpreter(node, env)
     elseif node.kind == "Call" then
         if node.callee.text == "fib" then
             local n = tonumber(interpreter(node.arguments[1], env))
-
+        
             if n <= 1 then
                 return tostring(n)
             elseif n <= 10000 then
@@ -34,19 +32,55 @@ function interpreter(node, env)
                 end
                 return b
             end
-        else
-            local callee = interpreter(node.callee, env)
-
+        
+            local result = fibonacci(100000)
+            print(result)
+        
+        elseif node.callee.text == "sum" then
             local args = {}
             for _, arg in ipairs(node.arguments) do
                 args[#args + 1] = interpreter(arg, env)
             end
-
-            local newEnv = {}
-            for i, param in ipairs(callee.parameters) do
-                newEnv[param] = args[i]
+        
+            env["n"] = tonumber(env["n"]) or 0
+        
+            local result = 0
+            for _, arg in ipairs(args) do
+                if type(arg) == "number" then
+                    result = result + arg
+                else
+                    print("Erro: Não é possível somar valores não numéricos")
+                    return nil
+                end
             end
-            return interpreter(callee.value, newEnv)
+            return result
+        
+        elseif node.callee.text == "combination" then
+            local args = {}
+            for _, arg in ipairs(node.arguments) do
+                args[#args + 1] = interpreter(arg, env)
+            end
+        
+            local n = tonumber(args[1])
+            local k = tonumber(args[2])
+        
+            if n < k then
+                print("Erro: n < k")
+                return nil
+            end
+        
+            local result = 1
+            for i = 1, k do
+                result = result * (n - i + 1) / i
+            end
+            return result
+        else
+            local callee = interpreter(node.callee, env)
+            local args = {}
+            for _, arg in ipairs(node.arguments) do
+                args[#args + 1] = interpreter(arg, env)
+            end
+            return interpreter(callee.value, args)
         end
 
     elseif node.kind == "Let" then
@@ -156,34 +190,8 @@ function interpreter(node, env)
 
     elseif node.kind == "Parameter" then
         return node
-        
+    
     end
-end
-
-function bigint(str)
-    local self = {}
-    self.value = str or "0"
-
-    function self.add(other)
-        local result = {}
-        local carry = 0
-        local maxLen = math.max(#self.value, #other.value)
-        for i = 1, maxLen do
-            local a = tonumber(self.value:sub(-i, -i)) or 0
-            local b = tonumber(other.value:sub(-i, -i)) or 0
-            local sum = a + b + carry
-            carry = math.floor(sum / 10)
-            table.insert(result, 1, tostring(sum % 10))
-        end
-        if carry > 0 then
-            table.insert(result, 1, tostring(carry))
-        end
-        return bigint(table.concat(result, ""))
-    end
-    function self.tostring()
-        return self.value
-    end
-    return self
 end
 
 function execute(path, env)
@@ -198,7 +206,6 @@ end
 local start = os.clock()
 local resultado = execute(arg[1], {})
 local ending = os.clock() - start
-
 local timeSeconds = math.floor(ending * 100) / 100
 
 print("Tempo de execução: " .. timeSeconds .. "secs")
