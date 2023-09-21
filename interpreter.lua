@@ -1,98 +1,39 @@
-local json = require("json")
+local json = require("src.json")
+local src = require("src.deepcopy")
 
 function interpreter(node, env)
     if node.kind == "Var" then
-        local var = node.text
-        if env[var] then
-            return env[var]
-        end
+        return env[node.text]
 
     elseif node.kind == "Function" then
-        return node
-
-    elseif node.kind == "Call" then
-        if node.callee.text == "fib" then
-            local n = tonumber(interpreter(node.arguments[1], env))
-        
-            if n <= 1 then
-                return tostring(n)
-            elseif n <= 10000 then
-                local a = bigint("0")
-                local b = bigint("1")
-                for i = 1, n do
-                    local c = a.add(b)
-                    a = b
-                    b = c
-                end
-                return a.tostring()
-            else
-                local a, b = 0, 1
-                for i = 2, n do
-                    a, b = b, a + b
-                end
-                return b
-            end
-        
-            local result = fibonacci(100000)
-            print(result)
-        
-        elseif node.callee.text == "sum" then
-            local args = {}
-            for _, arg in ipairs(node.arguments) do
-                args[#args + 1] = interpreter(arg, env)
-            end
-        
-            env["n"] = tonumber(env["n"]) or 0
-        
-            local result = 0
-            for _, arg in ipairs(args) do
-                if type(arg) == "number" then
-                    result = result + arg
-                else
-                    print("Erro: Não é possível somar valores não numéricos")
-                    return nil
-                end
-            end
-            return result
-        
-        elseif node.callee.text == "combination" then
-            local args = {}
-            for _, arg in ipairs(node.arguments) do
-                args[#args + 1] = interpreter(arg, env)
-            end
-        
-            local n = tonumber(args[1])
-            local k = tonumber(args[2])
-        
-            if n < k then
-                print("Erro: n < k")
-                return nil
-            end
-        
-            local result = 1
-            for i = 1, k do
-                result = result * (n - i + 1) / i
-            end
-            return result
-        else
-            local callee = interpreter(node.callee, env)
-            local args = {}
-            for _, arg in ipairs(node.arguments) do
-                args[#args + 1] = interpreter(arg, env)
-            end
-            return interpreter(callee.value, args)
+        for i, arg in ipairs(node.parameters) do
+            table.insert(env, arg.text)
+        end
+        return function(newEnv)
+            return interpreter(node.value, newEnv)
         end
 
+    elseif node.kind == "Call" then
+        local args = {}
+        for i, arg in ipairs(node.arguments) do
+            args[i] = interpreter(arg, env)
+        end
+
+        local newEnv = deepcopy(env)
+        for i, arg in ipairs(env) do
+            newEnv[arg] = args[i]
+        end
+        return interpreter(node.callee, newEnv)(newEnv)
+
     elseif node.kind == "Let" then
-        local value = interpreter(node.value, env)
-        env[node.name.text] = value
+        env[node.name.text] = interpreter(node.value, env)
         return interpreter(node.next, env)
 
     elseif node.kind == "Str" then
         return node.value
 
     elseif node.kind == "Int" then
-        return tonumber(node.value)
+        return node.value
 
     elseif node.kind == "Binary" then
         local lhs = interpreter(node.lhs, env)
@@ -100,7 +41,10 @@ function interpreter(node, env)
 
         local operators = {
             Add = function(x, y)
-                return tostring(x) .. tostring(y)
+                if type(x) == "string" or type(y) == "string" then
+                    return x .. y
+                end
+                return x + y
             end,
             Sub = function(x, y)
                 if type(x) == "string" or type(y) == "string" then
@@ -183,14 +127,10 @@ function interpreter(node, env)
         if type(term) == "number" or type(term) == "string" then
             print(term)
         end
-        if type(term) == "tuple" then
+        if type(term) == "table" then
             print(table.concat(term, ", "))
         end
         return term
-
-    elseif node.kind == "Parameter" then
-        return node
-    
     end
 end
 
