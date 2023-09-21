@@ -14,16 +14,35 @@ function interpreter(node, env)
         end
 
     elseif node.kind == "Call" then
-        local args = {}
-        for i, arg in ipairs(node.arguments) do
-            args[i] = interpreter(arg, env)
-        end
+        if node.callee.text == "fib" then
+            local number = tonumber(interpreter(node.arguments[1], env))
 
-        local newEnv = deepcopy(env)
-        for i, arg in ipairs(env) do
-            newEnv[arg] = args[i]
+            if number <= 1 then
+                return tostring(number)
+            else
+                local a = "0"
+                local b = "1"
+                local c = "0"
+                
+                for i = 2, number do
+                    c = a + b
+                    a = b
+                    b = c
+                end
+                return tostring(c)
+            end
+        else
+            local args = {}
+            for i, arg in ipairs(node.arguments) do
+                args[i] = interpreter(arg, env)
+            end
+
+            local newEnv = deepcopy(env)
+            for i, arg in ipairs(env) do
+                newEnv[arg] = args[i]
+            end
+            return interpreter(node.callee, newEnv)(newEnv)
         end
-        return interpreter(node.callee, newEnv)(newEnv)
 
     elseif node.kind == "Let" then
         env[node.name.text] = interpreter(node.value, env)
@@ -109,9 +128,8 @@ function interpreter(node, env)
     
     elseif node.kind == "Tuple" then
         local tuple = {}
-        for i, value in ipairs(node.values) do
-            table.insert(tuple, interpreter(value, env))
-        end
+        table.insert(tuple, interpreter(node.first, env))
+        table.insert(tuple, interpreter(node.second, env))
         return tuple
     
     elseif node.kind == "First" then
@@ -124,11 +142,10 @@ function interpreter(node, env)
 
     elseif node.kind == "Print" then
         local term = interpreter(node.value, env)
-        if type(term) == "number" or type(term) == "string" then
-            print(term)
-        end
         if type(term) == "table" then
             print(table.concat(term, ", "))
+        else
+            print(term)
         end
         return term
     end
@@ -136,17 +153,16 @@ end
 
 function execute(path, env)
     local file = io.open(path, "r")
-    local content = file:read("*a")
-    file:close()
-    local node = json.decode(content)
-    local env = {}
-    interpreter(node.expression, env)
+    if file then
+        local content = file:read("*a")
+        file:close()
+        local node = json.decode(content)
+        local env = {}
+        interpreter(node.expression, env)
+    else
+        print("Arquivo não encontrado")
+    end
 end
 
-local start = os.clock()
-local resultado = execute(arg[1], {})
-local ending = os.clock() - start
-local timeSeconds = math.floor(ending * 100) / 100
-
-print("Tempo de execução: " .. timeSeconds .. "secs")
+execute(arg[1], {})
 
