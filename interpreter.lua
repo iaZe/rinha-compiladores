@@ -1,6 +1,8 @@
 local json = require("src.json")
 local src = require("src.deepcopy")
 
+local path = "var/rinha/" .. arg[1] .. ".json"
+
 function interpreter(node, env)
     if node.kind == "Var" then
         return env[node.text]
@@ -151,7 +153,7 @@ function interpreter(node, env)
     end
 end
 
-function execute(path, env)
+function execute(path)
     local file = io.open(path, "r")
     if file then
         local content = file:read("*a")
@@ -164,5 +166,5 @@ function execute(path, env)
     end
 end
 
-execute(arg[1], {})
+execute(path)
 
