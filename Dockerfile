@@ -8,4 +8,5 @@ WORKDIR /app
 
 COPY . .
 
-CMD lua interpreter.lua $file
+ENTRYPOINT ["lua", "interpreter.lua", "source.rinha"]
+
