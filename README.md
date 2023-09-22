@@ -1,6 +1,6 @@
 # 🌑 Lua Interpreter
 
-Interpretador para linguagem `.rinha` feito em lua para a rinha de compiladores (e intepretadores) 
+Interpretador para linguagem `.rinha` feito em lua para a [rinha de compiladores (e intepretadores)](https://github.com/aripiprazole/rinha-de-compiler/)
 
 ### Funções
 
@@ -26,7 +26,7 @@ Para usar com docker, basta rodar o comando abaixo:
 docker build -t interpreter .
 docker run -e interpreter
 ```
-> Não precisa adicionar arquivos, pois a especificação diz que o arquivo tem que ser lido de `/var/rinha/source.rinha.json` então o path já está configurado no dockerfile
+> Não precisa adicionar arquivos, pois a [especificação](https://github.com/aripiprazole/rinha-de-compiler/#especificação) diz que o arquivo tem que ser lido de `/var/rinha/source.rinha.json` então o path já está configurado no dockerfile
 
 Para usar sem docker, basta rodar o comando abaixo:
 ```
@@ -42,7 +42,7 @@ Para rodar os testes, basta rodar o comando abaixo:
 
 ### Exemplos
 
-Deixei alguns arquivos JSON que foram dados como exemplo na especificação, para rodar basta rodar os comandos abaixo:
+Deixei alguns arquivos JSON que foram dados como exemplo na [especificação](https://github.com/aripiprazole/rinha-de-compiler/tree/main/files), para rodar basta rodar os comandos abaixo:
 ```
 lua interpreter.lua fib
 lua interpreter.lua sum
