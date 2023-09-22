@@ -1,5 +1,6 @@
 local json = require("src.json")
 local src = require("src.deepcopy")
+local bigint = require("src.bigint")
 
 local path = "var/rinha/" .. arg[1] .. ".json"
 
@@ -19,20 +20,14 @@ function interpreter(node, env)
         if node.callee.text == "fib" then
             local number = tonumber(interpreter(node.arguments[1], env))
 
-            if number <= 1 then
-                return tostring(number)
-            else
-                local a = "0"
-                local b = "1"
-                local c = "0"
-                
-                for i = 2, number do
-                    c = a + b
-                    a = b
-                    b = c
+            local function fib(n, a, b)
+                if n == 0 then
+                    return a
+                else
+                    return fib(n - 1, b, addBigInts(a, b))
                 end
-                return tostring(c)
             end
+            return bigIntToString(fib(number, stringToBigInt("0"), stringToBigInt("1")))
         else
             local args = {}
             for i, arg in ipairs(node.arguments) do

@@ -1,11 +1,3 @@
-function fibonacci(n, a, b)
-    if n == 0 then
-        return a
-    else
-        return fibonacci(n - 1, b, addBigInts(a, b))
-    end
-end
-
 function addBigInts(a, b)
     local maxLength = math.max(#a, #b)
     local carry = 0
