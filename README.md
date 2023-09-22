@@ -1,5 +1,5 @@
 # 🌑 Lua Interpreter
-teste
+
 Interpretador para linguagem `.rinha` feito em lua para a [rinha de compiladores (e intepretadores)](https://github.com/aripiprazole/rinha-de-compiler/)
 
 ### Funções
