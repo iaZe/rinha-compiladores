@@ -39,7 +39,7 @@ lua interpreter.lua <nome_do_arquivo>
 > exemplo: `lua interpreter.lua fib`
 
 
-## Exemplos
+### Exemplos
 
 Usando docker
 ```
