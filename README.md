@@ -30,6 +30,7 @@ docker run -e interpreter
 
 Para usar sem docker, basta rodar o comando abaixo:
 ```
-lua interpreter.lua
+lua interpreter.lua <path>
 ```
+> exemplo `lua interpreter.lua /var/rinha/source.rinha.json`
 

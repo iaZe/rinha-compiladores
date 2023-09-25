@@ -2,7 +2,7 @@ local json = require("src.json")
 local src = require("src.deepcopy")
 local bigint = require("src.bigint")
 
-local path = "var/rinha/source.rinha.json"
+local path = arg[1]
 
 function interpreter(node, env)
     if node.kind == "Var" then
@@ -27,7 +27,11 @@ function interpreter(node, env)
                     return fib(n - 1, b, addBigInts(a, b))
                 end
             end
-            return bigIntToString(fib(number, stringToBigInt("0"), stringToBigInt("1")))
+            local start = os.clock()
+            local result = bigIntToString(fib(number, stringToBigInt("0"), stringToBigInt("1")))
+            local finish = os.clock()
+            print("Tempo de execução: " .. (finish - start) .. "s")
+            return result
         else
             local args = {}
             for i, arg in ipairs(node.arguments) do
