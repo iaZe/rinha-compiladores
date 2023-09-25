@@ -9,5 +9,5 @@ RUN apt-get update && apt-get install -y \
 
 COPY . .
 
-CMD ["luajit", "interpreter.lua", "/var/rinha/fib.json"]
+CMD ["luajit", "interpreter.lua", "/var/rinha/source.rinha.json"]
 
