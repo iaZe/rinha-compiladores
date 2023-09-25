@@ -2,7 +2,7 @@ local json = require("src.json")
 local src = require("src.deepcopy")
 local bigint = require("src.bigint")
 
-local path = "var/rinha/" .. arg[1] .. ".json"
+local path = "var/rinha/source.rinha.json"
 
 function interpreter(node, env)
     if node.kind == "Var" then

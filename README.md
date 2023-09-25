@@ -30,23 +30,6 @@ docker run -e interpreter
 
 Para usar sem docker, basta rodar o comando abaixo:
 ```
-lua interpreter.lua <nome_do_arquivo>
+lua interpreter.lua
 ```
-> exemplo: `lua interpreter.lua fib`
 
-Para rodar os testes, basta rodar o comando abaixo:
-```
-./run.sh
-```
-> Caso não tenha permissão, rode o comando `chmod +x run.sh` e tente novamente
-
-### Exemplos
-
-Deixei alguns arquivos JSON que foram dados como exemplo na [especificação](https://github.com/aripiprazole/rinha-de-compiler/tree/main/files), para rodar basta rodar os comandos abaixo:
-```
-lua interpreter.lua fib
-lua interpreter.lua sum
-lua interpreter.lua print
-lua interpreter.lua combination
-lua interpreter.lua source.rinha
-```
