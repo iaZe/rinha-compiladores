@@ -27,11 +27,7 @@ function interpreter(node, env)
                     return fib(n - 1, b, addBigInts(a, b))
                 end
             end
-            local start = os.clock()
-            local result = bigIntToString(fib(number, stringToBigInt("0"), stringToBigInt("1")))
-            local finish = os.clock()
-            print("Tempo de execução: " .. (finish - start) .. "s")
-            return result
+            return bigIntToString(fib(number, stringToBigInt("0"), stringToBigInt("1")))
         else
             local args = {}
             for i, arg in ipairs(node.arguments) do
