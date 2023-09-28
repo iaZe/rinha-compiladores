@@ -131,11 +131,19 @@ function interpreter(node, env)
     
     elseif node.kind == "First" then
         local tuple = interpreter(node.value, env)
-        return tuple[1]
+        if type(tuple) == "table" and #tuple == 2 then
+            return tuple[1]
+        else
+            return error("Não é possível acessar o primeiro elemento de um valor não tupla")
+        end
     
     elseif node.kind == "Second" then
         local tuple = interpreter(node.value, env)
-        return tuple[2]
+        if type(tuple) == "table" and #tuple == 2 then
+            return tuple[2]
+        else
+            return error("Não é possível acessar o segundo elemento de um valor não tupla")
+        end
 
     elseif node.kind == "Print" then
         local term = interpreter(node.value, env)
