@@ -77,7 +77,12 @@ function interpreter(node, env)
                     print("Divisão por zero")
                     return nil
                 end
-                return x / y
+                -- se a divisão for float, resultar um inteiro
+                if x % y == 0 then
+                    return x / y
+                else
+                    return math.floor(x / y)
+                end
             end,
             Rem = function(x, y)
                 return x % y
